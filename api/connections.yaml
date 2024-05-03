@@ -1,0 +1,340 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/reubenmiller/go-c8y-cli/v2/tools/schema/extensionCommands.json
+---
+group:
+  name: connections
+  description: Manage Cloud Remote Access connection (definitions)
+
+# Use can use yaml anchors to reduce the amount of boilerplate
+x-types-connection: &type-connection
+  type: string
+  description: Connection
+  pipeline: true
+  dependsOn:
+    - "device"
+  # completion:
+  #   type: external
+  #   command:
+  #     - c8y
+  #     - remoteaccess
+  #     - connections
+  #     - list
+  #     - --device
+  #     - "%s*"
+  #     - --select=name
+  # lookup:
+  #   type: external
+  #   command:
+  #     - c8y
+  #     - devices
+  #     - list
+  #     - --query
+  #     - "name eq '%s*'"
+  #     - --select=id
+
+commands:
+  - name: list
+    method: GET
+    description: List remote access connections
+    descriptionLong: |
+      List the remote access connections already configured for the device
+    exampleList:
+      - command: c8y remoteaccess connections list --device mydevice
+        description: List remote access connections for a given device
+    path: /service/remoteaccess/devices/{device}/configurations
+    pathParameters:
+      - name: device
+        type: device[]
+        description: Device
+        pipeline: true
+
+  - name: get
+    description: Get remote access connection
+    descriptionLong: Get an existing remote access connection for a device
+    method: GET
+    path: /service/remoteaccess/devices/{device}/configurations/{id}
+    exampleList:
+      - command: c8y remoteaccess connections get --device mydevice --id 1
+        description: Get existing remote access configuration
+    pathParameters:
+      - name: device
+        type: device[]
+        description: Device
+        pipeline: false
+
+      - name: id
+        <<: *type-connection
+  
+  - name: update
+    hidden: true
+    description: Update remote access connection
+    descriptionLong: Update an existing remote access connection
+    method: PUT
+    path: /service/remoteaccess/devices/{device}/configurations/{id}
+    pathParameters:
+      - name: device
+        type: device[]
+        description: Device
+        pipeline: false
+
+      - name: id
+        <<: *type-connection
+    body:
+      - name: name
+        type: string
+        description: Profile name
+        required: true
+
+  - name: delete
+    description: Delete remote access connection
+    exampleList:
+      - command: |
+          c8y remoteaccess connections delete --device mydevice --id 1
+        description: Delete an existing remote access connection
+    method: DELETE
+    path: /service/remoteaccess/devices/{device}/configurations/{id}
+    pathParameters:
+      - name: device
+        type: device[]
+        description: Device
+        pipeline: false
+
+      - name: id
+        <<: *type-connection
+
+  - name: create-passthrough
+    description: Create passthrough connection
+    descriptionLong: |
+      Create passthrough connection
+
+    method: POST
+    path: /service/remoteaccess/devices/{device}/configurations
+    exampleList:
+      - command: |
+          c8y remoteaccess connections create-passthrough --device mydevice
+        description: Create a SSH passthrough connection to the localhost
+      - command: |
+          c8y remoteaccess connections create-passthrough --device mydevice --hostname customhost --port 1234 --name "My custom connection"
+        description: Create a SSH passthrough connection with custom details
+
+    pathParameters:
+      - name: device
+        type: device[]
+        description: Device
+        pipeline: true
+    body:
+      - name: name
+        type: string
+        description: Connection name
+        default: passthrough
+      
+      - name: hostname
+        type: string
+        default: "127.0.0.1"
+        description: Hostname
+
+      - name: port
+        type: integer
+        default: "22"
+        description: Port
+
+      - name: protocol
+        type: string
+        default: PASSTHROUGH
+        validationSet:
+          - PASSTHROUGH
+        description: Protocol
+
+    bodyRequiredKeys:
+      - hostname
+      - port
+      - protocol
+      - name
+    bodyTemplates:
+      # Apply a static template to enforce specific fragments
+      - type: jsonnet
+        template: "{credentialsType:'NONE'}"
+
+  - name: create-webssh
+    description: Create web ssh connection
+    descriptionLong: |
+      Create web ssh connection
+
+    method: POST
+    path: /service/remoteaccess/devices/{device}/configurations
+    exampleList:
+      - command: |
+          c8y remoteaccess connections create-webssh
+        description: Create a webssh connection
+
+      - command: c8y remoteaccess connections create-webssh --hostname 127.0.0.1 --port 2222
+        description: Create a webssh connection with a custom hostname and port
+    pathParameters:
+      - name: device
+        type: device[]
+        description: Device
+        pipeline: true
+    body:
+      - name: name
+        type: string
+        description: Connection name
+        default: webssh
+      
+      - name: hostname
+        type: string
+        description: Hostname
+
+      - name: port
+        type: integer
+        description: Port
+
+      - name: credentialsType
+        type: string
+        description: Credentials type
+        default: USER_PASS
+        validationSet:
+          - USER_PASS
+      
+      - name: privateKey
+        type: string
+        description: Private ssh key
+
+      - name: publicKey
+        type: string
+        description: Public ssh key
+
+      - name: username
+        type: string
+        description: Username
+
+      - name: password
+        type: string
+        description: Username
+
+      - name: protocol
+        type: string
+        default: SSH
+        validationSet:
+          - PASSTHROUGH
+          - SSH
+        description: Protocol
+
+    bodyRequiredKeys:
+      - hostname
+      - port
+      - protocol
+      - name
+
+  - name: create-vnc
+    description: Create vnc connection
+    descriptionLong: |
+      Create vnc connection
+
+    method: POST
+    path: /service/remoteaccess/devices/{device}/configurations
+    exampleList:
+      - command: |
+          c8y remoteaccess connections create-vnc
+        description: Create a VNC connection that does not require a password
+
+      - command: c8y remoteaccess connections create-vnc --password 'asd08dcj23dsf{@#9}'
+        description: Create a VNC connection that requires a password
+    pathParameters:
+      - name: device
+        type: device[]
+        description: Device
+        pipeline: true
+    body:
+      - name: name
+        type: string
+        description: Connection name
+        default: webssh
+      
+      - name: hostname
+        type: string
+        default: "127.0.0.1"
+        description: Hostname
+
+      - name: port
+        type: integer
+        default: "5900"
+        description: Port
+
+      - name: password
+        type: string
+        description: VNC Password
+
+      - name: protocol
+        type: string
+        default: VNC
+        validationSet:
+          - PASSTHROUGH
+          - SSH
+          - VNC
+        description: Protocol
+
+    bodyRequiredKeys:
+      - name
+      - hostname
+      - port
+      - protocol
+      - credentialsType
+    bodyTemplates:
+      # Apply a static template to enforce specific fragments
+      - type: jsonnet
+        template: "{credentialsType: if std.isEmpty(std.get($, 'password', '')) then 'NONE' else 'PASS_ONLY'}"
+
+  - name: create-telnet
+    description: Create telnet connection
+    descriptionLong: |
+      Create telnet connection
+
+    method: POST
+    path: /service/remoteaccess/devices/{device}/configurations
+    exampleList:
+      - command: |
+          c8y remoteaccess connections create-telnet
+        description: Create a telnet connection
+
+    pathParameters:
+      - name: device
+        type: device[]
+        description: Device
+        pipeline: true
+    body:
+      - name: name
+        type: string
+        description: Connection name
+        default: telnet
+      
+      - name: hostname
+        type: string
+        default: "127.0.0.1"
+        description: Hostname
+
+      - name: port
+        type: integer
+        default: "23"
+        description: Port
+
+      - name: credentialsType
+        type: string
+        default: NONE
+        hidden: true
+        description: Credentials type
+
+      - name: protocol
+        type: string
+        default: TELNET
+        validationSet:
+          - TELNET
+          - PASSTHROUGH
+          - SSH
+          - VNC
+        description: Protocol
+
+    bodyRequiredKeys:
+      - name
+      - hostname
+      - port
+      - protocol
+      - credentialsType

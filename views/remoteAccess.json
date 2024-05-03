@@ -1,0 +1,20 @@
+{
+    "$schema": "https://raw.githubusercontent.com/reubenmiller/go-c8y-cli/feat/extensions-manager/tools/schema/views.json",
+    "version": "v1",
+    "definitions": [
+        {
+            "name": "remoteAccessConnection",
+            "priority": 350,
+            "fragments": ["credentials", "protocol"],
+            "columns": [
+                "id",
+                "name",
+                "protocol",
+                "hostname",
+                "port",
+                "credentials.type",
+                "credentials.username"
+            ]
+        }
+    ]
+}
