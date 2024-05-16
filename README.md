@@ -1,5 +1,7 @@
 # c8y-remoteaccess
 
+:warning: Usage of this extension is discouraged as it will be incorporated natively in go-c8y-cli soon. In addition the integration will also support a new c8ylp replacement to natively create a local proxy connection to the device (e.g. with ssh etc.). You can track the progress here: https://github.com/reubenmiller/go-c8y-cli/pull/368
+
 go-c8y-cli extension to managed Cumulocity IoT Cloud Remote Access Connection definitions
 
 ## What is included?
